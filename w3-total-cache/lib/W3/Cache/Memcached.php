@@ -13,6 +13,7 @@ require_once W3TC_LIB_W3_DIR . '/Cache/Base.php';
  * Class W3_Cache_Memcached
  */
 class W3_Cache_Memcached extends W3_Cache_Base {
+
     /**
      * Memcache object
      *
@@ -26,21 +27,22 @@ class W3_Cache_Memcached extends W3_Cache_Base {
      * @param array $config
      */
     function __construct($config) {
-        @$this->_memcache = & new Memcache();
+        $persistant = (isset($config['persistant']) && (boolean) $config['persistant']) ? 'w3tc' : null;
+
+        @$this->_memcache = & new Memcached($persistant);
 
         if (!empty($config['servers'])) {
-            $persistant = isset($config['persistant']) ? (boolean) $config['persistant'] : false;
+
+            if (isset($config['pgcache.memcached.compatibility']) && ($config['pgcache.memcached.compatibility'])) {
+                $this->_memcache->setOption(Memcached::OPT_COMPRESSION, false);
+            }
 
             foreach ((array) $config['servers'] as $server) {
                 list($ip, $port) = explode(':', $server);
-                $this->_memcache->addServer(trim($ip), (integer) trim($port), $persistant);
+                $this->_memcache->addServer(trim($ip), (integer) trim($port));
             }
         } else {
             return false;
-        }
-
-        if (!empty($config['compress_threshold'])) {
-            $this->_memcache->setCompressThreshold((integer) $config['compress_threshold']);
         }
 
         return true;
@@ -64,7 +66,7 @@ class W3_Cache_Memcached extends W3_Cache_Base {
      * @return boolean
      */
     function add($key, &$var, $expire = 0) {
-        return @$this->_memcache->add($key, $var, false, $expire);
+        return @$this->_memcache->add($key, $var, $expire);
     }
 
     /**
@@ -76,7 +78,8 @@ class W3_Cache_Memcached extends W3_Cache_Base {
      * @return boolean
      */
     function set($key, &$var, $expire = 0) {
-        return @$this->_memcache->set($key, $var, false, $expire);
+        // file_put_contents('/tmp/memcache.txt', $key.PHP_EOL.PHP_EOL.print_r($var,TRUE).PHP_EOL.PHP_EOL.PHP_EOL,FILE_APPEND);
+        return @$this->_memcache->set($key, $var, $expire);
     }
 
     /**
@@ -98,7 +101,7 @@ class W3_Cache_Memcached extends W3_Cache_Base {
      * @return boolean
      */
     function replace($key, &$var, $expire = 0) {
-        return @$this->_memcache->replace($key, $var, false, $expire);
+        return @$this->_memcache->replace($key, $var, $expire);
     }
 
     /**
@@ -119,4 +122,5 @@ class W3_Cache_Memcached extends W3_Cache_Base {
     function flush() {
         return @$this->_memcache->flush();
     }
+
 }

@@ -8,6 +8,7 @@
  * Class W3_Config
  */
 class W3_Config {
+
     /**
      * Tabs count
      *
@@ -38,7 +39,6 @@ class W3_Config {
         'dbcache.reject.cookie' => 'array',
         'dbcache.reject.sql' => 'array',
         'dbcache.lifetime' => 'integer',
-
         'objectcache.enabled' => 'boolean',
         'objectcache.debug' => 'boolean',
         'objectcache.engine' => 'string',
@@ -49,7 +49,6 @@ class W3_Config {
         'objectcache.groups.global' => 'array',
         'objectcache.groups.nonpersistent' => 'array',
         'objectcache.lifetime' => 'integer',
-
         'pgcache.enabled' => 'boolean',
         'pgcache.debug' => 'boolean',
         'pgcache.engine' => 'string',
@@ -58,6 +57,8 @@ class W3_Config {
         'pgcache.file.locking' => 'boolean',
         'pgcache.memcached.servers' => 'array',
         'pgcache.memcached.persistant' => 'boolean',
+        'pgcache.memcached.compatibility' => 'boolean',
+        'pgcache.memcached.compatibility.prefix' => 'string',
         'pgcache.check.domain' => 'boolean',
         'pgcache.cache.query' => 'boolean',
         'pgcache.cache.home' => 'boolean',
@@ -89,7 +90,6 @@ class W3_Config {
         'pgcache.prime.interval' => 'integer',
         'pgcache.prime.limit' => 'integer',
         'pgcache.prime.sitemap' => 'string',
-
         'minify.enabled' => 'boolean',
         'minify.auto' => 'boolean',
         'minify.debug' => 'boolean',
@@ -163,7 +163,6 @@ class W3_Config {
         'minify.error.last' => 'string',
         'minify.error.notification' => 'string',
         'minify.error.notification.last' => 'integer',
-
         'cdn.enabled' => 'boolean',
         'cdn.debug' => 'boolean',
         'cdn.engine' => 'string',
@@ -236,16 +235,13 @@ class W3_Config {
         'cdn.reject.ua' => 'array',
         'cdn.reject.uri' => 'array',
         'cdn.reject.files' => 'array',
-
         'cloudflare.enabled' => 'boolean',
         'cloudflare.email' => 'string',
         'cloudflare.key' => 'string',
         'cloudflare.zone' => 'string',
-
         'varnish.enabled' => 'boolean',
         'varnish.debug' => 'boolean',
         'varnish.servers' => 'array',
-
         'browsercache.enabled' => 'boolean',
         'browsercache.no404wp' => 'boolean',
         'browsercache.no404wp.exceptions' => 'array',
@@ -273,25 +269,19 @@ class W3_Config {
         'browsercache.other.etag' => 'boolean',
         'browsercache.other.w3tc' => 'boolean',
         'browsercache.other.replace' => 'boolean',
-
         'mobile.enabled' => 'boolean',
         'mobile.rgroups' => 'array',
-
         'referrer.enabled' => 'boolean',
         'referrer.rgroups' => 'array',
-
         'common.support' => 'string',
         'common.install' => 'integer',
         'common.tweeted' => 'boolean',
-
         'config.check' => 'boolean',
         'config.path' => 'string',
-
         'widget.latest.enabled' => 'boolean',
         'widget.latest.items' => 'integer',
         'widget.pagespeed.enabled' => 'boolean',
         'widget.pagespeed.key' => 'string',
-
         'notes.wp_content_perms' => 'boolean',
         'notes.php_is_old' => 'boolean',
         'notes.theme_changed' => 'boolean',
@@ -317,7 +307,6 @@ class W3_Config {
         'notes.browsercache_rules_cache' => 'boolean',
         'notes.browsercache_rules_no404wp' => 'boolean',
         'notes.minify_error' => 'boolean',
-
         'timelimit.email_send' => 'integer',
         'timelimit.varnish_purge' => 'integer',
         'timelimit.cache_flush' => 'integer',
@@ -332,7 +321,6 @@ class W3_Config {
         'timelimit.domain_rename' => 'integer',
         'timelimit.minify_recommendations' => 'integer'
     );
-
     var $_defaults = array(
         'dbcache.enabled' => false,
         'dbcache.debug' => false,
@@ -351,7 +339,6 @@ class W3_Config {
             'wp_rg_'
         ),
         'dbcache.lifetime' => 180,
-
         'objectcache.enabled' => false,
         'objectcache.debug' => false,
         'objectcache.engine' => 'file',
@@ -380,7 +367,6 @@ class W3_Config {
             'plugins'
         ),
         'objectcache.lifetime' => 180,
-
         'pgcache.enabled' => false,
         'pgcache.debug' => false,
         'pgcache.engine' => 'file_generic',
@@ -391,6 +377,8 @@ class W3_Config {
             '127.0.0.1:11211'
         ),
         'pgcache.memcached.persistant' => true,
+        'pgcache.memcached.compatibility' => false,
+        'pgcache.memcached.compatibility.prefix' => 'domain:',
         'pgcache.check.domain' => true,
         'pgcache.cache.query' => true,
         'pgcache.cache.home' => true,
@@ -439,7 +427,6 @@ class W3_Config {
         'pgcache.prime.interval' => 900,
         'pgcache.prime.limit' => 10,
         'pgcache.prime.sitemap' => '',
-
         'minify.enabled' => false,
         'minify.auto' => false,
         'minify.debug' => false,
@@ -518,7 +505,6 @@ class W3_Config {
         'minify.error.last' => '',
         'minify.error.notification' => '',
         'minify.error.notification.last' => 0,
-
         'cdn.enabled' => false,
         'cdn.debug' => false,
         'cdn.engine' => 'ftp',
@@ -599,16 +585,13 @@ class W3_Config {
             'wp-content/uploads/wpcf7_captcha/*',
             'wp-content/uploads/imagerotator.swf'
         ),
-
         'cloudflare.enabled' => false,
         'cloudflare.email' => '',
         'cloudflare.key' => '',
         'cloudflare.zone' => '',
-
         'varnish.enabled' => false,
         'varnish.debug' => false,
         'varnish.servers' => array(),
-
         'browsercache.enabled' => true,
         'browsercache.no404wp' => false,
         'browsercache.no404wp.exceptions' => array(
@@ -640,7 +623,6 @@ class W3_Config {
         'browsercache.other.etag' => false,
         'browsercache.other.w3tc' => true,
         'browsercache.other.replace' => false,
-
         'mobile.enabled' => true,
         'mobile.rgroups' => array(
             'high' => array(
@@ -797,7 +779,6 @@ class W3_Config {
                 )
             )
         ),
-
         'referrer.enabled' => true,
         'referrer.rgroups' => array(
             'search_engines' => array(
@@ -813,19 +794,15 @@ class W3_Config {
                 )
             )
         ),
-
         'common.support' => '',
         'common.install' => 0,
         'common.tweeted' => false,
-
         'config.check' => true,
         'config.path' => '',
-
         'widget.latest.enabled' => true,
         'widget.latest.items' => 3,
         'widget.pagespeed.enabled' => true,
         'widget.pagespeed.key' => '',
-
         'notes.wp_content_perms' => true,
         'notes.php_is_old' => true,
         'notes.theme_changed' => false,
@@ -851,7 +828,6 @@ class W3_Config {
         'notes.browsercache_rules_cache' => true,
         'notes.browsercache_rules_no404wp' => true,
         'notes.minify_error' => false,
-
         'timelimit.email_send' => 180,
         'timelimit.varnish_purge' => 300,
         'timelimit.cache_flush' => 600,
@@ -1384,4 +1360,5 @@ class W3_Config {
 
         return $this->write(W3TC_CONFIG_PATH);
     }
+
 }

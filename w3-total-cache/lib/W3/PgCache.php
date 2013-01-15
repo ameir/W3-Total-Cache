@@ -8,6 +8,7 @@
  * Class W3_PgCache
  */
 class W3_PgCache {
+
     /**
      * Advanced cache config
      *
@@ -41,6 +42,20 @@ class W3_PgCache {
      * @var boolean
      */
     var $_enhanced_mode = false;
+
+    /**
+     * Compatibility (nginx) mode  flag
+     *
+     * @var boolean
+     */
+    var $_compatibility_mode = false;
+
+    /**
+     * Compatibility (nginx) mode  prefix
+     *
+     * @var string
+     */
+    var $_compatibility_mode_prefix = '';
 
     /**
      * Debug flag
@@ -113,6 +128,9 @@ class W3_PgCache {
         $this->_request_uri = $_SERVER['REQUEST_URI'];
         $this->_lifetime = $this->_config->get_integer('browsercache.html.lifetime');
         $this->_enhanced_mode = ($this->_config->get_string('pgcache.engine') == 'file_generic');
+
+        $this->_compatibility_mode = ($this->_config->get_string('pgcache.engine') == 'memcached' && $this->_config->get_boolean('pgcache.memcached.compatibility'));
+        $this->_compatibility_mode_prefix = $this->_config->get_string('pgcache.memcached.compatibility.prefix');
 
         if ($this->_config->get_boolean('mobile.enabled')) {
             $this->_mobile = & w3_instance('W3_Mobile');
@@ -318,9 +336,7 @@ class W3_PgCache {
                 $buffers = array();
 
                 foreach ($compressions as $_compression) {
-                    $_page_key = $this->_get_page_key($this->_request_uri, 
-                        $mobile_group, $referrer_group, $encryption, $_compression,
-                        $content_type);
+                    $_page_key = $this->_get_page_key($this->_request_uri, $mobile_group, $referrer_group, $encryption, $_compression, $content_type);
 
                     /**
                      * Compress content
@@ -369,9 +385,7 @@ class W3_PgCache {
                          * Set page key for debug
                          */
                         $this->_page_key = $this->_get_page_key(
-                            $this->_request_uri, $mobile_group, 
-                            $referrer_group, $encryption, $compression,
-                            $content_type);
+                                $this->_request_uri, $mobile_group, $referrer_group, $encryption, $compression, $content_type);
 
                         /**
                          * Append debug info
@@ -696,7 +710,7 @@ class W3_PgCache {
         $uas = $this->_config->get_array('pgcache.reject.ua');
         $preload = W3_Request::get_boolean('w3tc_preload');
 
-        if (! $preload) {
+        if (!$preload) {
             $uas = array_merge($uas, array(W3TC_POWERED_BY));
         }
 
@@ -820,6 +834,9 @@ class W3_PgCache {
         if (!w3_zlib_output_compression() && !headers_sent() && !$this->_is_buggy_ie()) {
             $compressions = $this->_get_compressions();
 
+            if ($this->_compatibility_mode)
+                unset($_SERVER['HTTP_ACCEPT_ENCODING']);
+
             foreach ($compressions as $compression) {
                 if (isset($_SERVER['HTTP_ACCEPT_ENCODING']) && stristr($_SERVER['HTTP_ACCEPT_ENCODING'], $compression) !== false) {
                     return $compression;
@@ -918,13 +935,13 @@ class W3_PgCache {
      * @param string $compression
      * @return string
      */
-    function _get_page_key($request_uri, $mobile_group = '', $referrer_group = '', 
-        $encryption = false, $compression = false, $content_type = false) {
+    function _get_page_key($request_uri, $mobile_group = '', $referrer_group = '', $encryption = false, $compression = false, $content_type = false) {
         // replace fragment
         $key = preg_replace('~#.*$~', '', $request_uri);
 
-        if ($this->_enhanced_mode) {
-            // URL decode
+        if ($this->_compatibility_mode) {
+            $key = $this->_compatibility_mode_prefix . $request_uri;
+        } elseif ($this->_enhanced_mode) {            // URL decode
             $key = urldecode($key);
 
             // replace double slashes
@@ -982,7 +999,7 @@ class W3_PgCache {
         /**
          * Append compression
          */
-        if ($compression) {
+        if ($compression && !$this->_compatibility_mode) {
             $key .= '_' . $compression;
         }
 
@@ -1072,14 +1089,14 @@ class W3_PgCache {
              */
             $headers = array_merge($headers, array(
                 'Status' => 'HTTP/1.1 404 Not Found'
-            ));
+                    ));
         } elseif ($this->_check_modified_since($time) || $this->_check_match($etag)) {
             /**
              * Add 304 header
              */
             $headers = array_merge($headers, array(
                 'Status' => 'HTTP/1.1 304 Not Modified'
-            ));
+                    ));
 
             /**
              * Don't send content if it isn't modified
@@ -1093,13 +1110,13 @@ class W3_PgCache {
         $headers = array_merge($headers, array(
             'Last-Modified' => w3_http_date($time),
             'Vary' => 'Cookie'
-        ));
+                ));
 
         if ($this->_config->get_boolean('browsercache.enabled')) {
             if ($this->_config->get_boolean('browsercache.html.expires')) {
                 $headers = array_merge($headers, array(
                     'Expires' => w3_http_date($expires)
-                ));
+                        ));
             }
 
             if ($this->_config->get_boolean('browsercache.html.cache.control')) {
@@ -1108,35 +1125,35 @@ class W3_PgCache {
                         $headers = array_merge($headers, array(
                             'Pragma' => 'public',
                             'Cache-Control' => 'public'
-                        ));
+                                ));
                         break;
 
                     case 'cache_validation':
                         $headers = array_merge($headers, array(
                             'Pragma' => 'public',
                             'Cache-Control' => 'public, must-revalidate, proxy-revalidate'
-                        ));
+                                ));
                         break;
 
                     case 'cache_noproxy':
                         $headers = array_merge($headers, array(
                             'Pragma' => 'public',
                             'Cache-Control' => 'public, must-revalidate'
-                        ));
+                                ));
                         break;
 
                     case 'cache_maxage':
                         $headers = array_merge($headers, array(
                             'Pragma' => 'public',
                             'Cache-Control' => sprintf('max-age=%d, public, must-revalidate, proxy-revalidate', $max_age)
-                        ));
+                                ));
                         break;
 
                     case 'no_cache':
                         $headers = array_merge($headers, array(
                             'Pragma' => 'no-cache',
                             'Cache-Control' => 'max-age=0, private, no-store, no-cache, must-revalidate'
-                        ));
+                                ));
                         break;
                 }
             }
@@ -1144,13 +1161,13 @@ class W3_PgCache {
             if ($this->_config->get_boolean('browsercache.html.etag')) {
                 $headers = array_merge($headers, array(
                     'Etag' => $etag
-                ));
+                        ));
             }
 
             if ($this->_config->get_boolean('browsercache.html.w3tc')) {
                 $headers = array_merge($headers, array(
                     'X-Powered-By' => W3TC_POWERED_BY
-                ));
+                        ));
             }
         }
 
@@ -1161,7 +1178,7 @@ class W3_PgCache {
             $headers = array_merge($headers, array(
                 'Vary' => 'Accept-Encoding, Cookie',
                 'Content-Encoding' => $compression
-            ));
+                    ));
         }
 
         /**
@@ -1176,7 +1193,7 @@ class W3_PgCache {
             $headers = array_merge($headers, array(
                 'Pragma' => 'private',
                 'Cache-Control' => 'private'
-            ));
+                    ));
         }
 
         /**
@@ -1259,12 +1276,12 @@ class W3_PgCache {
         $buffer = preg_replace_callback('~<!--\s*mfunc(.*)-->(.*)<!--\s*/mfunc\s*-->~Uis', array(
             &$this,
             '_parse_dynamic_mfunc'
-        ), $buffer);
+                ), $buffer);
 
         $buffer = preg_replace_callback('~<!--\s*mclude(.*)-->(.*)<!--\s*/mclude\s*-->~Uis', array(
             &$this,
             '_parse_dynamic_mclude'
-        ), $buffer);
+                ), $buffer);
     }
 
     /**
@@ -1333,4 +1350,5 @@ class W3_PgCache {
     function _has_dynamic(&$buffer) {
         return preg_match('~<!--\s*m(func|clude)(.*)-->(.*)<!--\s*/m(func|clude)\s*-->~Uis', $buffer);
     }
+
 }
